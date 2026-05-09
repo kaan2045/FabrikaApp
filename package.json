@@ -1,0 +1,46 @@
+{
+  "name": "zeytinyagi-fabrika",
+  "version": "3.0.0",
+  "description": "Zeytinyağı Fabrika Yönetim Sistemi — Supabase",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.taseli.zeytinyagi",
+    "productName": "Zeytinyağı Fabrika Sistemi",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "app/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Zeytinyağı Fabrika"
+    }
+  }
+}

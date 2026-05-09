@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ürün Doğrulama — Zeytinyağı Fabrikası</title>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --olive:#3e4e24;--olive-l:#6a8340;--olive-pale:#f2f7e8;--olive-border:#c2d6a2;
+  --gold:#c4941f;--gold-light:#faefc6;--gold-border:#f2d88e;
+  --green:#27834a;--green-bg:#edf7f0;
+  --bg:#f4f1ea;--card:#fff;--border:#e0dbd0;--text:#1c2210;--mid:#526832;--lt:#84a156;
+  --red:#c0392b;--red-bg:#fdf0ee;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+.header{background:linear-gradient(135deg,#2e3a18,#3e4e24 60%,#526832);padding:16px 20px;text-align:center;box-shadow:0 4px 20px rgba(28,34,16,.15)}
+.header .logo{width:52px;height:52px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 8px;box-shadow:0 3px 12px rgba(196,148,31,.4)}
+.header h1{font-family:'Bitter',serif;font-size:19px;font-weight:700;color:#f4f1ea}
+.header p{font-size:10px;color:rgba(244,241,234,.45);text-transform:uppercase;letter-spacing:2px;margin-top:3px}
+
+.container{max-width:580px;margin:0 auto;padding:20px 14px 40px}
+
+.verified{background:var(--green-bg);border:2px solid var(--green);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.verified-icon{width:42px;height:42px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.verified h2{font-family:'Bitter',serif;font-size:14px;color:var(--green);font-weight:700}
+.verified p{font-size:11px;color:#4a9070;margin-top:2px}
+
+.card{background:var(--card);border-radius:16px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(28,34,16,.07);overflow:hidden;margin-bottom:14px}
+.card-head{background:linear-gradient(135deg,var(--olive-pale),#fff);padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.card-head h3{font-family:'Bitter',serif;font-size:15px;font-weight:700;color:var(--olive)}
+.fis{background:var(--olive);color:#fff;border-radius:7px;padding:3px 11px;font-size:11px;font-weight:700;font-family:monospace}
+.card-body{padding:16px 18px}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.item{padding:10px 13px;background:var(--bg);border-radius:10px;border:1px solid var(--border)}
+.item .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--lt);margin-bottom:3px}
+.item .val{font-size:14px;font-weight:700;color:var(--olive)}
+.item.wide{grid-column:1/-1}
+.item.gold{background:var(--gold-light);border-color:var(--gold-border)}
+.item.gold .lbl{color:var(--gold)}
+.item.gold .val{color:#8b6914}
+.item.green{background:var(--green-bg);border-color:#b7dfc5}
+.item.green .lbl{color:var(--green)}
+.item.green .val{color:var(--green)}
+
+.cins-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.cins-tag{background:var(--olive-pale);border:1px solid var(--olive-border);color:var(--olive);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+
+/* HARİTA */
+#map{width:100%;height:240px;border-radius:10px;border:2px solid var(--border);z-index:1}
+.map-note{font-size:10px;color:var(--lt);margin-top:6px;text-align:center}
+.map-btns{display:flex;gap:8px;margin-top:8px}
+.map-btn{flex:1;padding:8px;border:none;border-radius:8px;font-family:'Nunito Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px}
+.map-btn.tkgm{background:var(--olive);color:#fff}
+.map-btn.gmaps{background:#fff;color:var(--olive);border:2px solid var(--olive-border)}
+
+/* HASH */
+.hash-card{background:#1c2210;border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.hash-card h4{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#84a156;margin-bottom:6px}
+.hash-val{font-family:monospace;font-size:9px;color:#c2d6a2;word-break:break-all;line-height:1.7}
+.hash-note{font-size:10px;color:#526832;margin-top:6px}
+
+.footer{text-align:center;padding:20px;border-top:1px solid var(--border);margin-top:4px}
+.footer .brand{font-family:'Bitter',serif;font-size:15px;font-weight:700;color:var(--olive);margin-bottom:3px}
+.footer p{font-size:11px;color:var(--lt)}
+
+.error{background:var(--red-bg);border:2px solid var(--red);border-radius:14px;padding:24px;text-align:center}
+.error h2{font-family:'Bitter',serif;font-size:18px;color:var(--red);margin-bottom:8px}
+.error p{font-size:13px;color:#7a2a20}
+
+.loading{text-align:center;padding:60px 20px}
+.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--olive);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🫒</div>
+  <h1>Zeytinyağı Fabrikası</h1>
+  <p>Ürün Doğrulama Sistemi</p>
+</div>
+
+<div class="container">
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p style="color:var(--lt);font-size:13px">Ürün bilgileri yükleniyor...</p>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="brand">🫒 Taşeli Zeytincilik</div>
+  <p>Mersin / Mut · mutevoo.com.tr</p>
+  <p style="margin-top:5px;font-size:10px;color:#a3be7a">SHA-256 korumalı · Zeytinyağı Fabrika Sistemi v3 Pro</p>
+</div>
+
+<script>
+function getData(){
+  const hash=location.hash.slice(1);
+  if(!hash)return null;
+  try{return JSON.parse(decodeURIComponent(escape(atob(hash))))}catch(e){return null}
+}
+
+function render(d){
+  const isHak=d.tip==='hak';
+  const tarih=d.tarih?new Date(d.tarih).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}):'-';
+  const hasMap=d.lat&&d.lng&&d.ada;
+  const alan=d.alan?d.alan.toLocaleString('tr-TR'):null;
+
+  document.getElementById('content').innerHTML=`
+    <div class="verified">
+      <div class="verified-icon">✅</div>
+      <div>
+        <h2>Doğrulandı — Orijinal Ürün</h2>
+        <p>Zeytinyağı Fabrika Sistemi tarafından kayıt altına alınmıştır</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>🫒 Ürün Bilgileri</h3>
+        <span class="fis">${d.f||'-'}</span>
+      </div>
+      <div class="card-body">
+        <div class="grid">
+          <div class="item wide">
+            <div class="lbl">Üretici</div>
+            <div class="val" style="font-size:18px">${d.u||'-'}</div>
+          </div>
+          <div class="item">
+            <div class="lbl">İlçe</div>
+            <div class="val">${d.i||'-'}</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Köy / Mahalle</div>
+            <div class="val">${d.ky||'-'}</div>
+          </div>
+          <div class="item gold">
+            <div class="lbl">Zeytin Miktarı</div>
+            <div class="val">${d.kg?d.kg+' kg':'-'}</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Çekim Tipi</div>
+            <div class="val">${isHak?'🫒 Hak Yağ':'✅ Çekildi'}</div>
+          </div>
+          ${isHak?`
+          <div class="item green">
+            <div class="lbl">Müşteri Yağı</div>
+            <div class="val">${d.my||'-'} lt</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Randıman</div>
+            <div class="val">%${d.rand||'-'}</div>
+          </div>`:''}
+          ${d.c&&d.c.length>0?`
+          <div class="item wide">
+            <div class="lbl">Zeytin Cinsi</div>
+            <div class="cins-list">${d.c.map(x=>`<span class="cins-tag">${x}</span>`).join('')}</div>
+          </div>`:''}
+          <div class="item wide">
+            <div class="lbl">Kayıt Tarihi</div>
+            <div class="val" style="font-size:13px">${tarih}</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Durum</div>
+            <div class="val">${d.durum||'-'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${hasMap?`
+    <div class="card">
+      <div class="card-head">
+        <h3>🗺️ Bahçe Konumu</h3>
+        <span style="background:var(--olive-pale);color:var(--olive);border-radius:7px;padding:3px 10px;font-size:11px;font-weight:700">Ada: ${d.ada} · Parsel: ${d.pars}</span>
+      </div>
+      <div class="card-body">
+        <div class="grid" style="margin-bottom:12px">
+          <div class="item">
+            <div class="lbl">Ada No</div>
+            <div class="val">${d.ada}</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Parsel No</div>
+            <div class="val">${d.pars}</div>
+          </div>
+          ${alan?`
+          <div class="item gold">
+            <div class="lbl">Tahmini Alan</div>
+            <div class="val">${alan} m²</div>
+          </div>
+          <div class="item">
+            <div class="lbl">Tahmini Ağaç</div>
+            <div class="val">~${Math.round(d.alan/40)} adet</div>
+          </div>`:''}
+        </div>
+        <div id="map"></div>
+        <p class="map-note">⚠️ Koordinat yaklaşıktır. Kesin sınır için TKGM'yi kullanın.</p>
+        <div class="map-btns">
+          <a class="map-btn tkgm" href="https://parselsorgu.tkgm.gov.tr/" target="_blank">🏛️ TKGM'de Görüntüle</a>
+          <a class="map-btn gmaps" href="https://www.google.com/maps?q=${d.lat},${d.lng}&z=16&t=k" target="_blank">📍 Google Maps</a>
+        </div>
+      </div>
+    </div>`:''}
+
+    ${d.h?`
+    <div class="hash-card">
+      <h4>🔐 SHA-256 Doğrulama Kodu</h4>
+      <div class="hash-val">${d.h}</div>
+      <div class="hash-note">Bu kod ürünün değiştirilmediğini kanıtlar.</div>
+    </div>`:''}
+
+    <div style="background:var(--olive-pale);border:1px solid var(--olive-border);border-radius:12px;padding:12px 15px;font-size:11px;color:var(--mid);line-height:1.7">
+      <strong style="color:var(--olive)">🛡️ Bu QR kod nedir?</strong><br>
+      Bu QR kod Zeytinyağı Fabrika Sistemi tarafından otomatik oluşturulmuştur.
+      Tüm bilgiler SHA-256 ile imzalanmış ve değiştirilemez şekilde korunmaktadır.
+    </div>
+  `;
+
+  // Leaflet haritayı başlat
+  if(hasMap){
+    setTimeout(()=>{
+      const map=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([d.lat,d.lng],15);
+      const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19});
+      const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+      sat.addTo(map); // Uydu görünümü varsayılan
+      L.control.layers({'🗺️ Harita':osm,'🛰️ Uydu':sat}).addTo(map);
+      const icon=L.divIcon({
+        html:`<div style="background:#c0392b;color:#fff;border-radius:50% 50% 50% 0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,.4)"><span style="transform:rotate(45deg)">🌳</span></div>`,
+        iconSize:[36,36],iconAnchor:[18,36],popupAnchor:[0,-36],className:''
+      });
+      L.marker([d.lat,d.lng],{icon}).addTo(map)
+        .bindPopup(`<b>Ada: ${d.ada} · Parsel: ${d.pars}</b><br>${d.i} / ${d.ky}<br><small>${d.u}</small>`,{maxWidth:200})
+        .openPopup();
+    },100);
+  }
+}
+
+function renderError(){
+  document.getElementById('content').innerHTML=`
+    <div class="error">
+      <h2>❌ Ürün Bulunamadı</h2>
+      <p>Bu QR kod geçersiz veya hasarlı görünüyor.<br>Lütfen fabrikayla iletişime geçin.</p>
+    </div>`;
+}
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    const d=getData();
+    if(d&&d.f)render(d);
+    else renderError();
+  },400);
+});
+</script>
+</body>
+</html>
